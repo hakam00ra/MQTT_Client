@@ -1,29 +1,28 @@
-import sys, os
-from PyQt5.QtWidgets import QMessageBox, QSizePolicy, QCheckBox, QHBoxLayout, QTextEdit, QFormLayout, QTableWidget, QTableWidgetItem, QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QComboBox, QFileDialog
-from PyQt5 import QtGui#, QtWidgets
-from PyQt5.QtGui import QTextCursor, QImage#, QPixmap, QIcon, QPainter, QColor
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 import configparser
-import paho.mqtt.client as mqtt
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QUrl#,QTimer
-#import threading
-import sqlite3
-import random
-#from PIL import Image
 import csv
-#import io
-import folium
-import requests
-import json
-import numpy as np
-import polyline
-from datetime import datetime
 import io
+import json
+import os
+import random
+import sqlite3
+import sys
+from datetime import datetime
 import cv2 as cv
-#import torch
-from PIL import Image
-#from ultralytics import YOLO
-#import binascii
+import folium
+import numpy as np
+import paho.mqtt.client as mqtt
+import polyline
+import requests
+from PyQt5 import QtGui
+from PyQt5.QtCore import QObject, Qt, QUrl, pyqtSignal
+from PyQt5.QtGui import QImage, QTextCursor
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QComboBox,
+                             QFileDialog, QFormLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QMainWindow, QMenu, QMessageBox,
+                             QPushButton, QSizePolicy, QTableWidget,
+                             QTableWidgetItem, QTabWidget, QTextEdit,
+                             QVBoxLayout, QWidget)
 
 
 def resource_path(relative_path):
