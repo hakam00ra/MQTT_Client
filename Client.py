@@ -244,9 +244,7 @@ class SubTab1(Subs):
 
             self.tableWidget.removeRow(row)
         with open("config.ini", "w") as configfile:
-            config.write(configfile)
-
-        
+            config.write(configfile)        
 
     def save_mqtt_parameters(self):
         selected_rows = set(index.row() for index in self.tableWidget.selectionModel().selectedRows())
@@ -309,9 +307,7 @@ class SubTab1(Subs):
                 self.client_edit.setText(mqtt_config.get("client_id", ""))
         
     def disconnect_from_broker(self):
-        #self.disconnect_button.hide()                
         self.client.disconnect()
-        #self.signals.connected.emit(0)
 
     def connect_to_broker(self):
         # Get MQTT broker settings from the QLineEdit widgets
@@ -343,8 +339,6 @@ class SubTab1(Subs):
             self.clientReady.emit(self.sharedClientID)  # Emit a signal when the client is ready
             self.client.on_disconnect = self.on_disconnect  # Set the on_disconnect event handler
             self.client.on_connect = self.on_connect
-
-            #self.signals.connected.emit(1)            
             self.client.loop_start()
 
         except Exception as e:
@@ -649,91 +643,6 @@ class SubTab3(Subs):
         # Insert the image
         cursor.insertImage(scaled_image)
 
-        # Create a BytesIO object to read the bytes
-        image_stream = io.BytesIO(image_bytes)
-        imagehak = cv.imdecode(np.frombuffer(image_bytes, np.uint8), cv.IMREAD_COLOR)
-        #cv2.imshow("Image", imagehak)
-        """
-        image_pil = Image.open(image_stream)
-        # Calculate the scaling factor to achieve the desired dimensions
-        desired_width = 640
-        desired_height = 640
-        width, height = image_pil.size
-        aspect_ratio = width / height
-
-        if aspect_ratio > 1:
-            new_width = desired_width
-            new_height = int(desired_width / aspect_ratio)
-        else:
-            new_height = desired_height
-            new_width = int(desired_height * aspect_ratio)
-
-        # Resize the image while maintaining the aspect ratio
-        image_pil = image_pil.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-        # Create a blank white image of the desired dimensions and paste the resized image onto it
-        background = Image.new('RGB', (desired_width, desired_height), (255, 255, 255))
-        background.paste(image_pil, ((desired_width - new_width) // 2, (desired_height - new_height) // 2))
-
-        # Convert the PIL image to a NumPy array
-        image_np = np.array(background)
-
-        # Convert the NumPy array to a PyTorch tensor
-        image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).float() / 255.0  # Transpose channels
-        """
-        """
-        model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
-        model.conf = 0.3
-
-        results = model(imagehak)
-        
-        for r in results:
-            im_array = r.plot()  # plot a BGR numpy array of predictions
-            im = Image.fromarray(im_array)  # RGB PIL image
-            im = Image.merge('RGB', (im.getchannel('B'), im.getchannel('G'), im.getchannel('R')))
-            desired_height, desired_width = r.orig_shape       
-            
-            boxes = r.boxes
-            classes = boxes.cls
-            #print(classes)            
-            dClasses = torch.unique(classes)
-            #print(dClasses)
-            
-            # comment out
-            for dClass in dClasses:
-                detectCount = (classes==dClass).sum()
-                detections += f"{r.names[dClass.item()]}: {detectCount}\n"
-            # up to here
-            detections = ""
-            detection_counts = {r.names[dClass.item()]: (classes == dClass).sum() for dClass in dClasses}
-            detections = '\n'.join(f"{class_name}: {count}" for class_name, count in detection_counts.items())
-
-        #print(detections)
-    
-        im.save("model_out.jpg")
-        #im.show()
-        # Output the second image directly without saving it to a file
-        with io.BytesIO() as output_buffer:
-            im.save(output_buffer, format="JPEG")
-            image_bytes = output_buffer.getvalue()
-
-        hex_data = ''.join([f'{byte:02x}' for byte in image_bytes])
-           
-        image = QImage()
-        image.loadFromData(bytes.fromhex(hex_data))
-        
-        if desired_height > 350:
-            desired_height = 350
-        if desired_width > 400:
-            desired_width = 400
-        scaled_image = image.scaled(desired_width, desired_height, aspectRatioMode=Qt.KeepAspectRatio)          
-        #cursor.insertText("\n") 
-        cursor.insertImage(scaled_image)
-        cursor.insertText("\n")
-        cursor.insertText(detections)
-        cursor.insertText("\n\n")
-        """
-
     def insert_telemetry_data(self, payload, topic):  
         data_lines = payload.strip().split('\n')
         imei = data_lines[0].strip()
@@ -960,8 +869,7 @@ class Page3(Pages):
             self.table_widget.setItem(row, 0, QTableWidgetItem(imei))
             self.table_widget.setItem(row, 1, QTableWidgetItem(timestamp))
             self.table_widget.setItem(row, 2, QTableWidgetItem(message))
-            self.table_widget.setItem(row, 3, QTableWidgetItem(topic))
-            #self.table_widget.setItem(row, 4, QTableWidgetItem(type))            
+            self.table_widget.setItem(row, 3, QTableWidgetItem(topic))        
 
     def download_data(self):
         search_criteria = self.search_criteria_combo.currentText()
@@ -1088,16 +996,7 @@ class Page4(Pages):
             #     icon=custom_icon
             # ).add_to(map)                
                 if (index==len(coordinates)-1):
-                    #custom_icon = folium.DivIcon(
-                    #html=f'<div style="font-weight: bold; font-size: 16px;"><i class="fa fa-map-marker fa-2x" style="color: {color};"></i><br>{counter}</div>',
-                    #icon_size=(60, 60)  # Adjust the icon size as needed
-                    #)
-                    folium.Marker(location = coord, popup="End\n<i>%s</i>\nd2d: %.1fm\nTotal: %.1fm" %(coord, d2d, result['routes'][0]['distance']),  icon=folium.Icon(color=color)).add_to(map)
-                    #folium.Marker(
-                    #    location=coord,
-                    #    popup="<i>%s</i>\nd2d: %.1fm\nTotal: %.1fm" %(coord, d2d, result['routes'][0]['distance']), 
-                    #    icon=custom_icon
-                    #).add_to(map)
+                    folium.Marker(location = coord, popup="End\n<i>%s</i>\nd2d: %.1fm\nTotal: %.1fm" %(coord, d2d, result['routes'][0]['distance']),  icon=folium.Icon(color=color)).add_to(map)                    
         else:            
             folium.Marker(location=coordinates[0], popup="Start\n<i>%s</i>\nd2d: 0m" % (coordinates[0],), icon=folium.Icon(color='blue')).add_to(map)
 
