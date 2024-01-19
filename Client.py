@@ -593,8 +593,7 @@ class SubTab3(Subs):
         
         self.messageCounter += 1
         topic = message.topic
-        
-        #if topic == 'image' and len(message.payload)>2000:#and message.payload!=b'0170,0' and message.payload!=b'0170,2' and message.payload!=b'':
+        # Silly way to make out if the message contains an image
         if len(message.payload)>2000:
             payload = message.payload.hex()
             print(payload)
@@ -605,13 +604,11 @@ class SubTab3(Subs):
                 print(f"Error: {e}")
                 return
         message_text = f"#{self.messageCounter}\nTopic: {topic}\nMessage:\n{payload}\n\n"
-        #if topic == 'image' and len(message.payload)>2000:#and message.payload!=b'0170,2' and message.payload!=b'' and message.payload!=b'0170,0':
         if len(message.payload)>2000:
             self.handle_image(payload, topic)
         else:
             self.message_display.append(message_text)
 
-        # Ensure the QTextCursor is at the end of the QTextEdit
         cursor = self.message_display.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.message_display.setTextCursor(cursor)       
@@ -632,14 +629,12 @@ class SubTab3(Subs):
             desired_height = 350
         if desired_width > 400:
             desired_width = 400
-        scaled_image = image.scaled(desired_width, desired_height, aspectRatioMode=Qt.KeepAspectRatio)            
-        # Create a QTextCursor and set it to the end of the QTextEdit
+        scaled_image = image.scaled(desired_width, desired_height, aspectRatioMode=Qt.KeepAspectRatio)
         cursor = QTextCursor(self.message_display.document())
         cursor.movePosition(QTextCursor.End)
         self.message_display.setTextCursor(cursor)
-        # Insert the text message
+        
         cursor.insertText(f"#{self.messageCounter}\nTopic: {topic}\nImage: \n\n")
-        # Insert the image
         cursor.insertImage(scaled_image)
 
     def insert_telemetry_data(self, payload, topic):  
@@ -790,7 +785,6 @@ class Page2(Pages):
             # Delete the device from the SQLite newDatabase26 based on 'type' and 'imei'
             cursor.execute('DELETE FROM devices WHERE imei = ?', (imei,))
             devicesRAM = [sub_list for sub_list in devicesRAM if sub_list[0] != imei]
-            # Remove the row from the QTableWidget
             self.tableWidget.removeRow(row)
         conn.commit()
         conn.close()        
@@ -803,12 +797,10 @@ class Page3(Pages):
         super().__init__()
         self.layout = QVBoxLayout(self)
         
-        # Create a horizontal layout for the search criteria label and combo box
         search_criteria_layout = QHBoxLayout()
         self.label = QLabel("Search based on:", self)
         search_criteria_layout.addWidget(self.label)
 
-        # Create a combo box to choose search criteria
         self.search_criteria_combo = QComboBox()
         self.search_criteria_combo.addItem("IMEI")
         self.search_criteria_combo.addItem("Topic")
@@ -816,13 +808,11 @@ class Page3(Pages):
         
         self.layout.addLayout(search_criteria_layout)
 
-        # Create widgets for search input and query button
         self.search_input_edit = QLineEdit()
         self.query_button = QPushButton("Query Database")        
         self.layout.addWidget(self.search_input_edit)
         self.layout.addWidget(self.query_button)
         
-        # Create a QTableWidget to display the query results
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(5)  # Adjust the number of columns as needed
         self.layout.addWidget(self.table_widget)
@@ -830,22 +820,17 @@ class Page3(Pages):
         self.download_button = QPushButton("Download Data")  # Add this button
         self.layout.addWidget(self.download_button)
 
-        # Set QTableWidget size policy to expanding
         table_size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table_widget.setSizePolicy(table_size_policy)
 
-        # Connect the query button click signal to the query_database function
         self.query_button.clicked.connect(self.query_database)
         self.download_button.clicked.connect(self.download_data)
 
     def query_database(self):
-        # Get the search criteria (IMEI or Topic) selected by the user
         search_criteria = self.search_criteria_combo.currentText()
 
-        # Get the search input entered by the user
         search_input = self.search_input_edit.text()
 
-        # Clear the table widget
         self.table_widget.clear()
         self.table_widget.setRowCount(0)
         self.table_widget.setColumnCount(4)  # Adjust the number of columns as needed
@@ -862,7 +847,6 @@ class Page3(Pages):
             data = cursor.fetchall()
         conn.close()
 
-        # Populate the QTableWidget with the retrieved data
         self.table_widget.setRowCount(len(data))
         for row, (imei, timestamp, message, topic) in enumerate(data):
             self.table_widget.setItem(row, 0, QTableWidgetItem(imei))
@@ -873,11 +857,9 @@ class Page3(Pages):
     def download_data(self):
         search_criteria = self.search_criteria_combo.currentText()
 
-        # Get the search input entered by the user
         search_input = self.search_input_edit.text()
 
         if search_input:
-            # Open a file dialog for the user to choose a location to save the data
             options = QFileDialog.Options()
             options |= QFileDialog.ReadOnly
             file_path, _ = QFileDialog.getSaveFileName(self, "Save Data", "", "CSV Files (*.csv);;All Files (*)", options=options)
@@ -886,13 +868,11 @@ class Page3(Pages):
                 conn = sqlite3.connect('newDatabase26.db')
                 cursor = conn.cursor()
 
-                # Retrieve data based on the entered IMEI from the 'data' table
                 cursor.execute(f'SELECT imei, timestamp, message, topic FROM data WHERE {search_criteria} = ?', (search_input,))
                 data = cursor.fetchall()
 
                 conn.close()
 
-                # Write the data to the selected CSV file
                 if data:
                     with open(file_path, 'w', newline='') as csv_file:
                         csv_writer = csv.writer(csv_file)
@@ -921,12 +901,10 @@ class Page4(Pages):
         map_url = QUrl(f"https://www.openstreetmap.org/?mlat={initial_latitude}&mlon={initial_longitude}#map=13/{initial_latitude}/{initial_longitude}")
         self.map.setUrl(map_url)
         
-        # Create a horizontal layout for the search criteria label and combo box
         search_criteria_layout = QHBoxLayout()
         self.label = QLabel("Retrieve GPS data for device with IMEI:", self)
         search_criteria_layout.addWidget(self.label)
 
-        # Create a combo box to choose search criteria
         self.search_criteria_combo = QComboBox()       
         search_criteria_layout.addWidget(self.search_criteria_combo)
                 
