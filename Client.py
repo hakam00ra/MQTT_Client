@@ -67,10 +67,8 @@ def initialize_database():
     )
     ''')
     
-    # Create an index on the 'topic' column for efficient message retrieval
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_topic ON data(topic)')
 
-    # Create an index on the 'imei' column for efficient device retrieval
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_imei ON data(imei)')
 
     conn.commit()
@@ -93,7 +91,6 @@ class MainWindow(QMainWindow):
         self.tab_widget = QTabWidget(self)
         self.layout.addWidget(self.tab_widget)
 
-        # Create and add multiple pages as tabs
         self.page1 = Page1()
         self.page2 = Page2()
         self.page3 = Page3()
@@ -117,11 +114,7 @@ class Page1(Pages):
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
-
-        # Create a QTabWidget for the sub-tabs within the "Broker" tab
         sub_tab_widget = QTabWidget(self)
-
-        # Create sub-tabs and add them to the sub_tab_widget        
         connectTab = SubTab1()
         publishTab = SubTab2()
         subscribeTab = SubTab3()
@@ -134,7 +127,6 @@ class Page1(Pages):
         sub_tab_widget.addTab(publishTab, "Publish")
         sub_tab_widget.addTab(subscribeTab, "Subscribe")
 
-        # Add the sub-tab widget to the main layout
         self.layout.addWidget(sub_tab_widget)
 
 class Subs(QWidget):
@@ -149,22 +141,16 @@ class SubTab1(Subs):
         self.layout = QVBoxLayout(self)
         self.signals = WorkerSignals()
 
-        # Create a form layout for organizing label and QLineEdit pairs
         form_layout = QFormLayout()
         self.client = None  # Initialize client as None
         
         subscribedTopics = QLabel("Brokers:")
         form_layout.addWidget(subscribedTopics)
-        # Create a QTableWidget to display the list of topics        
         self.tableWidget = QTableWidget(self)
         self.tableWidget.setColumnCount(1)  # Two columns: Topic and Subscription Status
         self.tableWidget.setHorizontalHeaderLabels(['Name'])
         form_layout.addWidget(self.tableWidget)
-
-        # Connect the context menu to the table widget
         self.tableWidget.setContextMenuPolicy(3)  # 3 is for Qt.CustomContextMenu
-        #self.tableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        
         button_layout = QHBoxLayout()
         self.add_button = QPushButton("Add Broker")
         self.remove_button = QPushButton("Delete Broker")
@@ -214,18 +200,15 @@ class SubTab1(Subs):
 
         self.tableWidget.itemClicked.connect(self.load_mqtt_parameters)
         self.signals.connected.connect(self.show_success_message)
-        # Add the form layout to the sub-tab layout
         self.layout.addLayout(form_layout)
         self.load_brokers()
 
     def add_broker(self):
-        # Add a new row with empty cells for IMEI and comments
         row_position = self.tableWidget.rowCount()
         self.tableWidget.insertRow(row_position)
         self.tableWidget.setItem(row_position, 0, QTableWidgetItem(""))
         
     def remove_broker(self):
-        # Remove the selected row(s)
         config = configparser.ConfigParser()
         config.read("config.ini")
         selected_rows = set(index.row() for index in self.tableWidget.selectionModel().selectedRows())
@@ -238,7 +221,6 @@ class SubTab1(Subs):
                     del brokerNames_config[key]
             
             if f"{broker}" in config:
-                # Remove the section 'MQTT' and its contents
                 config.remove_section(f"{broker}")
 
             self.tableWidget.removeRow(row)
@@ -258,8 +240,6 @@ class SubTab1(Subs):
                 config["Brokers"] = {}
 
             brokerName_config = config["Brokers"]
-
-            #topic_key = f"Topic {len(topics_config) + 1}"        
             topic_key = broker
             brokerName_config[topic_key] = broker
             
@@ -283,7 +263,6 @@ class SubTab1(Subs):
             brokerNames_config = config["Brokers"]
             for key in brokerNames_config: 
                 broker = brokerNames_config[key]
-                #topics.append(topic)
                 row_position = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(row_position)
                 self.tableWidget.setItem(row_position, 0, QTableWidgetItem(broker))                
@@ -309,14 +288,11 @@ class SubTab1(Subs):
         self.client.disconnect()
 
     def connect_to_broker(self):
-        # Get MQTT broker settings from the QLineEdit widgets
         broker = self.ip_edit.text()
         port_str = self.port_edit.text()
         username = self.username_edit.text()
         password = self.password_edit.text()
         client_id = self.client_edit.text()
-
-         # Validate the port number
         if not port_str.isdigit():
             QMessageBox.critical(self, "Invalid Port", "Please enter a valid port number.", QMessageBox.Ok)
             return
@@ -326,10 +302,7 @@ class SubTab1(Subs):
 
     def connect_mqtt_broker(self, broker, port, username, password, client_id):
         try:
-            # Create an MQTT client instance
             self.client = mqtt.Client(client_id=client_id)
-
-            # Set username and password if provided
             if username:
                 self.client.username_pw_set(username, password)
 
@@ -366,27 +339,21 @@ class SubTab2(QWidget):
         super().__init__()
         self.layout = QVBoxLayout(self)
         self.signals = WorkerSignals()
-
-        # Create a form layout for organizing label, QLineEdit, QTextEdit, and QPushButton
         form_layout = QFormLayout()
 
-        # Add a label for the topic entry
         topic_label = QLabel("Topic:")
         self.topic_edit = QLineEdit()
         self.topic_edit.setPlaceholderText("Enter a topic")
         form_layout.addRow(topic_label, self.topic_edit)
 
-        # Add a label for the message entry
         message_label = QLabel("Message:")
         self.message_edit = QTextEdit()
         self.message_edit.setPlaceholderText("Enter your message")
         form_layout.addRow(message_label, self.message_edit)
 
-        # Add a checkbox for the retain flag
         self.retain_checkbox = QCheckBox("Retain")
         form_layout.addRow(self.retain_checkbox)
 
-        # Add a button to publish the message
         self.publish_button = QPushButton("Publish")
         self.publish_button.clicked.connect(self.publish_message)
         form_layout.addRow(self.publish_button)
@@ -400,7 +367,6 @@ class SubTab2(QWidget):
         retain = self.retain_checkbox.isChecked()
 
         if topic and message:
-            # Publish the message to the MQTT topic
             self.sharedClientID.publish(topic, message, retain=retain)
             """
             QMessageBox.information(
@@ -422,35 +388,28 @@ class SubTab3(Subs):
         super().__init__()
         self.layout = QVBoxLayout(self)
         self.signals = WorkerSignals()
-
-        # Create a form layout for organizing label and QTextEdit pairs
         form_layout = QVBoxLayout()
         self.messageCounter = 0
-        # Add a label for the topic entry
+
         topics_label = QLabel("Enter a topic:")
         form_layout.addWidget(topics_label)
 
-        # Add a QTextEdit for entering MQTT topics
         self.topic_edit = QTextEdit()
         self.topic_edit.setPlaceholderText("Enter a topic and press 'Add Topic'")
         self.topic_edit.setMaximumHeight(100)
         form_layout.addWidget(self.topic_edit)
 
-        # Add a button to add the topic to the table
         add_topic_button = QPushButton("Add Topic")
         add_topic_button.clicked.connect(self.add_topic)
         form_layout.addWidget(add_topic_button)
 
         subscribedTopics = QLabel("Topics:")
         form_layout.addWidget(subscribedTopics)
-        # Create a QTableWidget to display the list of topics
         self.topic_table_widget = QTableWidget()
         self.topic_table_widget.setColumnCount(2)  # Two columns: Topic and Subscription Status
         self.topic_table_widget.setHorizontalHeaderLabels(['Topic', 'Subscribed'])
         self.topic_table_widget.setMaximumHeight(200)
         form_layout.addWidget(self.topic_table_widget)
-
-        # Add a button to subscribe/unsubscribe to/from the selected topic
         self.subscribe_button = QPushButton("Subscribe/Unsubscribe")
         self.subscribe_button.clicked.connect(self.subscribe_to_topic)
         form_layout.addWidget(self.subscribe_button)
@@ -460,18 +419,14 @@ class SubTab3(Subs):
         
         self.layout.addLayout(form_layout)
 
-        # Create a context menu (to delete topics)
         self.context_menu = QMenu(self)
         delete_action = QAction("Delete", self)
         delete_action.triggered.connect(self.delete_topic)
         self.context_menu.addAction(delete_action)
 
-        # Connect the context menu to the table widget
         self.topic_table_widget.setContextMenuPolicy(3)  # 3 is for Qt.CustomContextMenu
         self.topic_table_widget.customContextMenuRequested.connect(self.show_context_menu)
-
-
-        # Create a separate area to display incoming messages for subscribed topics        
+        
         self.message_display = QTextEdit()
         self.message_display.setReadOnly(True)  # Make it read-only
         self.message_display.setMinimumSize(300, 550)
@@ -481,7 +436,6 @@ class SubTab3(Subs):
         self.load_topicConfig()
 
     def show_context_menu(self, pos):
-        # Show the context menu at the cursor position
         self.context_menu.exec_(self.topic_table_widget.mapToGlobal(pos))
 
     def delete_topic(self):
@@ -510,10 +464,7 @@ class SubTab3(Subs):
         config.read("config.ini")
         if "Topics" not in config:
             config["Topics"] = {}
-
-        topics_config = config["Topics"]
-
-        #topic_key = f"Topic {len(topics_config) + 1}"        
+        topics_config = config["Topics"]    
         topic_key = topic
         topics_config[topic_key] = topic
 
@@ -538,13 +489,11 @@ class SubTab3(Subs):
             topics_config = config["Topics"]
             for key in topics_config: 
                 topic = topics_config[key]
-                #topics.append(topic)
                 row_position = self.topic_table_widget.rowCount()
                 self.topic_table_widget.insertRow(row_position)
                 self.topic_table_widget.setItem(row_position, 0, QTableWidgetItem(topic))
                 self.topic_table_widget.setItem(row_position, 1, QTableWidgetItem("No"))
                 self.topic_edit.clear()
-            #print(topics)
 
     def subscribe_to_topic(self):
         selected_row = self.topic_table_widget.currentRow()
@@ -679,13 +628,11 @@ class Page2(Pages):
         super().__init__()        
         self.layout = QVBoxLayout(self)
 
-        # Create a QTableWidget for displaying devices
         self.tableWidget = QTableWidget(self)
         self.tableWidget.setColumnCount(3)  # Two columns: IMEI and Comments
         self.tableWidget.setHorizontalHeaderLabels(['IMEI', 'Read Topic', 'Comments'])
         self.layout.addWidget(self.tableWidget)
 
-        # Create buttons for adding and removing devices
         button_layout = QHBoxLayout()
         self.add_button = QPushButton("Add Device")
         self.remove_button = QPushButton("Remove Device")
@@ -697,7 +644,6 @@ class Page2(Pages):
         button_layout.addWidget(self.del_from_db)
         self.layout.addLayout(button_layout)
 
-        # Connect button signals to functions
         self.add_button.clicked.connect(self.add_device)
         self.remove_button.clicked.connect(self.remove_device)
         self.add_to_db.clicked.connect(self.insert_deviceSQL)
@@ -706,7 +652,6 @@ class Page2(Pages):
         self.load_devicesSQL()
 
     def add_device(self):
-        # Add a new row with empty cells for IMEI and comments
         row_position = self.tableWidget.rowCount()
         self.tableWidget.insertRow(row_position)
         self.tableWidget.setItem(row_position, 0, QTableWidgetItem(""))
@@ -723,13 +668,10 @@ class Page2(Pages):
         conn = sqlite3.connect('newDatabase26.db')
         cursor = conn.cursor()
 
-        # Retrieve devices from the 'data' table where 'type' is 'device'
         cursor.execute('SELECT imei, read_topic, comments FROM devices')
         devices = cursor.fetchall()
 
         conn.close()
-
-        # Populate the QTableWidget with the retrieved devices
         self.tableWidget.setRowCount(len(devices))
         for row, (imei, read_topic, comments) in enumerate(devices):
             self.tableWidget.setItem(row, 0, QTableWidgetItem(imei))
@@ -745,7 +687,6 @@ class Page2(Pages):
 
         selected_rows = set(index.row() for index in self.tableWidget.selectionModel().selectedRows())
         for row in (sorted(selected_rows)):
-            # Retrieve the IMEI and comments from the new row
             imei_item = self.tableWidget.item(row, 0)
             read_topic_item = self.tableWidget.item(row, 1)
             comments_item = self.tableWidget.item(row, 2)
@@ -782,7 +723,6 @@ class Page2(Pages):
             imei_item = self.tableWidget.item(row, 0)
             imei = imei_item.text() if imei_item else ""
 
-            # Delete the device from the SQLite newDatabase26 based on 'type' and 'imei'
             cursor.execute('DELETE FROM devices WHERE imei = ?', (imei,))
             devicesRAM = [sub_list for sub_list in devicesRAM if sub_list[0] != imei]
             self.tableWidget.removeRow(row)
