@@ -1014,7 +1014,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     config = configparser.ConfigParser()
 
-    # Check if the config file exists, if not, create it
     if not os.path.exists("config.ini"):
         """
         config["Brokers"] = {
